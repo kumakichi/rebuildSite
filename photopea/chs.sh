@@ -1,72 +1,77 @@
 #!/bin/bash
 
-servfile_name="photopea.go"
+outFileDir="chs_output"
+servFileName="photopea.go"
 prefix="https://ps.gaoding.com/"
 
-if [ $# -ne 1 ]
-then
+function abspath() {
+	if [[ -d "$1" ]]; then
+		pushd "$1" >/dev/null
+		pwd
+		popd >/dev/null
+	elif [[ -e $1 ]]; then
+		pushd "$(dirname "$1")" >/dev/null
+		echo "$(pwd)/$(basename "$1")"
+		popd >/dev/null
+	else
+		echo "$1" does not exist! >&2
+		return 127
+	fi
+}
+
+if [ $# -ne 1 ]; then
 	echo "Usage: $0 all-request-curl-file"
 	exit
 fi
 
-cat $1 | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | grep -v "curl '[^ ]\+gstatic.*" | grep -v "curl '[^ ]\+doubleclick.net.*" | grep -v "curl '[^ ]\+baidu.com" |
-while read line
-do
-	link=$(echo "$line" | awk -F"'" '{print $2}')
-	truncLine=$(echo "$link" | sed "s@$prefix@@g")
-	if [ ${#truncLine} -eq 0 ]
-	then
-		continue
-	fi
+if [ -d "$outFileDir" ]; then
+	echo "output directory $outFileDir alread exists, check it, exit now"
+	exit
+fi
 
-	dirName=$(dirname $truncLine)
-	fileName=$(basename $truncLine)
-	if [ ! -d "$dirName" ]
-	then
-		mkdir -p "$dirName"
-	fi
-	
-	if [ ! -f "$truncLine" ]
-	then
-		wget -c "$link" -O "$truncLine"
-	else
-		echo "file $truncLine alread exists, jump over"
-	fi
-done
+allCurlReq="$1"
+acrPath=$(abspath "$allCurlReq")
 
-cat > "$servfile_name" << EOF
+mkdir "$outFileDir"
+cd "$outFileDir"
+
+cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | grep -v "curl '[^ ]\+gstatic.*" | grep -v "curl '[^ ]\+doubleclick.net.*" | grep -v "curl '[^ ]\+baidu.com" |
+	while read line; do
+		link=$(echo "$line" | awk -F"'" '{print $2}')
+		truncLine=$(echo "$link" | sed "s@$prefix@@g")
+		if [ ${#truncLine} -eq 0 ]; then
+			continue
+		fi
+
+		dirName=$(dirname $truncLine)
+		fileName=$(basename $truncLine)
+		if [ ! -d "$dirName" ]; then
+			mkdir -p "$dirName"
+		fi
+
+		if [ ! -f "$truncLine" ]; then
+			wget -c "$link" -O "$truncLine"
+		else
+			echo "file $truncLine alread exists, jump over"
+		fi
+	done
+
+cat >"$servFileName" <<EOF
 package main
 
 import (
-	"flag"
-	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/gobuffalo/packr"
 )
-
-const (
-	MainPage = "index.html"
-)
-
-var port string
-
-func init() {
-	flag.StringVar(&port, "p", "3000", "listen port")
-	flag.Parse()
-}
 
 func main() {
-	http.HandleFunc("/backend", handler)
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("."))))
+	box := packr.NewBox("./$outFileDir")
 
-	log.Printf("Listen at :%s", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func handler(rw http.ResponseWriter, req *http.Request) {
-	t, _ := template.ParseFiles(MainPage)
-	t.Execute(rw, nil)
+	http.Handle("/", http.FileServer(box))
+	host := ":3000"
+	log.Printf("listen on %s\n", host)
+	http.ListenAndServe(host, nil)
 }
 EOF
