@@ -1,0 +1,2 @@
+* How to
+  request page, wait loading, copy -> copy all as cURL
