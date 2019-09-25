@@ -56,6 +56,9 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 		fi
 	done
 
+wget -c "$prefix" -O index.html
+sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
+
 cat >"$servFileName" <<EOF
 package main
 
