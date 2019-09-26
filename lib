@@ -1,9 +1,5 @@
 #!/bin/bash
 
-outFileDir="jsb_output"
-servFileName="jsbeautifier.go"
-prefix="https://beautifier.io/"
-
 function abspath() {
 	if [[ -d "$1" ]]; then
 		pushd "$1" >/dev/null
@@ -43,14 +39,22 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 			continue
 		fi
 
+		if [[ $truncLine =~ ^https://.* ]]
+		then
+			truncLine=$(echo "$truncLine" | sed -E 's@(http[s]?://)(.*)@\2@g')
+		fi
+
 		dirName=$(dirname $truncLine)
 		fileName=$(basename $truncLine)
 		if [ ! -d "$dirName" ]; then
 			mkdir -p "$dirName"
 		fi
 
+		# polyfill.min.js\?features\=default\&flags\=gated polyfill.min.js
+		fileName=$(echo "$fileName" | sed -E 's@([^?]+)(\?.+)@\1@g')
+
 		if [ ! -f "$truncLine" ]; then
-			wget -c "$link" -O "$truncLine"
+			wget -c "$link" -O "${truncLine%/*}/${fileName}"
 		else
 			echo "file $truncLine alread exists, jump over"
 		fi
@@ -58,7 +62,9 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 
 wget -c "$prefix" -O index.html
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
+sed -E -i 's@("http[s]?://)(.*)@"\2@g' index.html
 
+cd ..
 cat >"$servFileName" <<EOF
 package main
 
