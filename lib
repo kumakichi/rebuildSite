@@ -33,9 +33,20 @@ cd "$outFileDir"
 
 cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | grep -v "curl '[^ ]\+gstatic.*" | grep -v "curl '[^ ]\+doubleclick.net.*" |
 	while read line; do
+        cmdLine=$(echo "$line" | sed -E 's@(.*)(;$)@\1 -o @g')
 		link=$(echo "$line" | awk -F"'" '{print $2}')
+		if [ "$junk" != "" ]
+		then
+			if [[ "$link" =~ ^"$junk".* ]]
+			then
+				echo "junk link $link"
+				continue
+			fi
+		fi
+
 		truncLine=$(echo "$link" | sed "s@$prefix@@g")
 		if [ ${#truncLine} -eq 0 ]; then
+            eval "$cmdLine index.html"
 			continue
 		fi
 
@@ -46,6 +57,11 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 
 		dirName=$(dirname $truncLine)
 		fileName=$(basename $truncLine)
+        if [ "$dirName" = "$fileName" ] # https://demo.com/some.txt
+        then
+            dirName="."
+        fi
+
 		if [ ! -d "$dirName" ]; then
 			mkdir -p "$dirName"
 		fi
@@ -54,13 +70,18 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 		fileName=$(echo "$fileName" | sed -E 's@([^?]+)(\?.+)@\1@g')
 
 		if [ ! -f "$truncLine" ]; then
-			wget -c "$link" -O "${truncLine%/*}/${fileName}"
+            echo "Getting ${dirName}/${fileName} ..."
+            eval "$cmdLine ${dirName}/${fileName}"
 		else
 			echo "file $truncLine alread exists, jump over"
 		fi
 	done
 
-wget -c "$prefix" -O index.html
+if [ "$junk" != "" ]
+then
+    grep -E -v "\"$junk" index.html > il
+    mv il index.html
+fi
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
 sed -E -i 's@("http[s]?://)(.*)@"\2@g' index.html
 
