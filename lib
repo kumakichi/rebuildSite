@@ -20,10 +20,10 @@ if [ $# -ne 1 ]; then
 	exit
 fi
 
-if [ -d "$outFileDir" ]; then
-	echo "output directory $outFileDir alread exists, check it, exit now"
-	exit
-fi
+#if [ -d "$outFileDir" ]; then
+#	echo "output directory $outFileDir alread exists, check it, exit now"
+#	exit
+#fi
 
 allCurlReq="$1"
 acrPath=$(abspath "$allCurlReq")
@@ -31,14 +31,12 @@ acrPath=$(abspath "$allCurlReq")
 mkdir "$outFileDir"
 cd "$outFileDir"
 
-cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | grep -v "curl '[^ ]\+gstatic.*" | grep -v "curl '[^ ]\+doubleclick.net.*" |
+cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analytics.com.*" | grep -v "curl '[^ ]\+doubleclick.net.*" |
 	while read line; do
-        cmdLine=$(echo "$line" | sed -E 's@(.*)(;$)@\1 -o @g')
+		cmdLine=$(echo "$line" | sed -E 's@(.*)(;$)@\1 -o @g')
 		link=$(echo "$line" | awk -F"'" '{print $2}')
-		if [ "$junk" != "" ]
-		then
-			if [[ "$link" =~ ^"$junk".* ]]
-			then
+		if [ "$junk" != "" ]; then
+			if [[ "$link" =~ ^"$junk".* ]]; then
 				echo "junk link $link"
 				continue
 			fi
@@ -46,21 +44,19 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 
 		truncLine=$(echo "$link" | sed "s@$prefix@@g")
 		if [ ${#truncLine} -eq 0 ]; then
-            eval "$cmdLine index.html"
+			eval "$cmdLine index.html"
 			continue
 		fi
 
-		if [[ $truncLine =~ ^https://.* ]]
-		then
+		if [[ $truncLine =~ ^https://.* ]]; then
 			truncLine=$(echo "$truncLine" | sed -E 's@(http[s]?://)(.*)@\2@g')
 		fi
 
 		dirName=$(dirname $truncLine)
 		fileName=$(basename $truncLine)
-        if [ "$dirName" = "$fileName" ] # https://demo.com/some.txt
-        then
-            dirName="."
-        fi
+		if [ "$dirName" = "$fileName" ]; then # https://demo.com/some.txt
+			dirName="."
+		fi
 
 		if [ ! -d "$dirName" ]; then
 			mkdir -p "$dirName"
@@ -70,17 +66,16 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google.*" | 
 		fileName=$(echo "$fileName" | sed -E 's@([^?]+)(\?.+)@\1@g')
 
 		if [ ! -f "$truncLine" ]; then
-            echo "Getting ${dirName}/${fileName} ..."
-            eval "$cmdLine ${dirName}/${fileName}"
+			echo "Getting ${dirName}/${fileName} ..."
+			eval "$cmdLine ${dirName}/${fileName}"
 		else
 			echo "file $truncLine alread exists, jump over"
 		fi
 	done
 
-if [ "$junk" != "" ]
-then
-    grep -E -v "\"$junk" index.html > il
-    mv il index.html
+if [ "$junk" != "" ]; then
+	grep -E -v "\"$junk" index.html >il
+	mv il index.html
 fi
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
 sed -E -i 's@("http[s]?://)(.*)@"\2@g' index.html

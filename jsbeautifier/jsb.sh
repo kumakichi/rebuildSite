@@ -1,7 +1,7 @@
 #!/bin/bash
 
 outFileDir="jsb_output"
-servFileName="jsbeautifier.go"
+servFileName="jsb.go"
 prefix="https://beautifier.io/"
 
 . ../lib
