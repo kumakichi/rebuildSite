@@ -36,15 +36,23 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 		cmdLine=$(echo "$line" | sed -E 's@(.*)(;$)@\1 -o @g')
 		link=$(echo "$line" | awk -F"'" '{print $2}')
 		if [ "$junk" != "" ]; then
-			if [[ "$link" =~ ^"$junk".* ]]; then
+			if [[ "$link" =~ .*"$junk".* ]]; then
 				echo "junk link $link"
 				continue
 			fi
 		fi
 
+        if [ "$index" = "$link" ]
+        then
+            eval "$cmdLine index.html"
+        fi
+
 		truncLine=$(echo "$link" | sed "s@$prefix@@g")
 		if [ ${#truncLine} -eq 0 ]; then
-			eval "$cmdLine index.html"
+            if [ "$index" = "" ]
+            then
+                eval "$cmdLine index.html"
+            fi
 			continue
 		fi
 
@@ -65,7 +73,7 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 		# polyfill.min.js\?features\=default\&flags\=gated polyfill.min.js
 		fileName=$(echo "$fileName" | sed -E 's@([^?]+)(\?.+)@\1@g')
 
-		if [ ! -f "$truncLine" ]; then
+		if [ ! -f "${dirName}/${fileName}" ]; then
 			echo "Getting ${dirName}/${fileName} ..."
 			eval "$cmdLine ${dirName}/${fileName}"
 		else
@@ -74,11 +82,10 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 	done
 
 if [ "$junk" != "" ]; then
-	grep -E -v "\"$junk" index.html >il
-	mv il index.html
+    sed -E -i "s@$junk@@g" index.html
 fi
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
-sed -E -i 's@("http[s]?://)(.*)@"\2@g' index.html
+sed -E -i "s@(.*)(\"|')(https\:\/\/)(.*)@\1\2\4@g;s@(.*)(\"//|'//)(.*)@\1\3@g" index.html
 
 cd ..
 cat >"$servFileName" <<EOF
