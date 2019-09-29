@@ -81,11 +81,12 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 		fi
 	done
 
+cp index.html x0
 if [ "$junk" != "" ]; then
     sed -E -i "s@$junk@@g" index.html
 fi
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
-sed -E -i "s@(.*)(\"|')(https\:\/\/)(.*)@\1\2\4@g;s@(.*)(\"//|'//)(.*)@\1\3@g" index.html
+sed -E -i "s@(.*)(\"|')(https\:\/\/)(.*)@\1\2\4@g;s@(.*)(\"|')(//)(.*)@\1\2\4@g" index.html
 
 cd ..
 cat >"$servFileName" <<EOF
@@ -106,4 +107,28 @@ func main() {
 	log.Printf("listen on %s\n", host)
 	http.ListenAndServe(host, nil)
 }
+EOF
+
+cat >"${servFileName%go}c" <<EOF
+#include "httpd.h"
+
+int main(int c, char **v)
+{
+	serve_forever("3000");
+	return 0;
+}
+
+void route(int sock_fd)
+{
+	serve_dir(sock_fd, "$outFileDir");
+}
+EOF
+
+cat >Makefile<<EOF
+.PHONY:all
+
+all: ${servFileName%.go}
+
+${servFileName%.go}: ${servFileName%go}c
+	gcc -o \$@ \$^ ../httpd.c -I ../
 EOF
