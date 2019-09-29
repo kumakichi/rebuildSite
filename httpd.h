@@ -13,6 +13,8 @@
 #define FORBIDDEN 403
 #define NOTFOUND  404
 
+extern int debug_mode;
+
 //Server control functions
 
 void serve_forever(const char *PORT);
@@ -57,22 +59,30 @@ static struct {
 	char *ext;
 	char *filetype;
 } extensions[] = {
-	{
-	"gif", "image/gif"}, {
-	"jpg", "image/jpg"}, {
-	"jpeg", "image/jpeg"}, {
-	"png", "image/png"}, {
-	"ico", "image/ico"}, {
-	"zip", "image/zip"}, {
-	"gz", "image/gz"}, {
-	"tar", "image/tar"}, {
-	"htm", "text/html"}, {
-	"html", "text/html"}, {
-	"js", "application/javascript"}, {
-	"css", "text/css; charset=utf-8"}, {
-	"woff", "font/woff"}, {
-	"ttf", "application/x-font-ttf"}, {
-	0, 0}
+	{"gif",  "image/gif"},
+	{"jpg",  "image/jpg"},
+	{"jpeg", "image/jpeg"},
+	{"png",  "image/png"},
+	{"svg",  "image/svg+xml"},
+	{"bmp",  "image/bmp"},
+	{"tiff", "image/tiff"},
+	{"webp", "image/webp"},
+	{"ico",  "image/x-icon"},
+	{"zip",  "application/x-zip-compressed"},
+	{"gz",   "application/x-gzip"},
+	{"tar",  "image/tar"},
+	{"bz2",  "application/x-bzip2"},
+	{"htm",  "text/html"},
+	{"html", "text/html"},
+	{"js",   "application/javascript"},
+	{"css",  "text/css; charset=utf-8"},
+	{"woff", "font/woff"},
+	{"ttf",  "application/x-font-ttf"},
+	{"rar",  "application/x-rar-compressed"},
+	{"mp4",  "video/mp4"},
+	{"mp3",  "audio/mpeg"},
+	{"flv",  "video/x-flv"},
+	{0, 0}
 };
 
 void serve_dir(int sock_fd, char *dirname);

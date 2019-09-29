@@ -81,7 +81,6 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 		fi
 	done
 
-cp index.html x0
 if [ "$junk" != "" ]; then
     sed -E -i "s@$junk@@g" index.html
 fi
@@ -114,6 +113,7 @@ cat >"${servFileName%go}c" <<EOF
 
 int main(int c, char **v)
 {
+	//debug_mode=1;
 	serve_forever("3000");
 	return 0;
 }
@@ -131,4 +131,7 @@ all: ${servFileName%.go}
 
 ${servFileName%.go}: ${servFileName%go}c
 	gcc -o \$@ \$^ ../httpd.c -I ../
+
+clean:
+	@rm -rf ${servFileName%.go}
 EOF

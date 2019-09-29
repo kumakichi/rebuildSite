@@ -15,6 +15,7 @@
 #define CONNMAX 10
 #define BACKLOG 20
 
+int debug_mode = 0;
 static int listenfd, clients[CONNMAX];
 static void error(char *);
 static void startServer(const char *);
@@ -149,7 +150,9 @@ void respond(int n)
 		uri = strtok(NULL, " \t");
 		prot = strtok(NULL, " \t\r\n");
 
-		fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+		if (debug_mode) {
+			fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+		}
 
 		qs = strchr(uri, '?');
 		if (qs) {
@@ -171,7 +174,8 @@ void respond(int n)
 			h->name = k;
 			h->value = v;
 			h++;
-			fprintf(stderr, "[H] %s: %s\n", k, v);
+			if (debug_mode)
+				fprintf(stderr, "[H] %s: %s\n", k, v);
 			t = v + 1 + strlen(v);
 			if (t[1] == '\r' && t[2] == '\n')
 				break;
