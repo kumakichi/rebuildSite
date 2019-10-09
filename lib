@@ -92,18 +92,34 @@ cat >"$servFileName" <<EOF
 package main
 
 import (
-	"log"
+	"flag"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gobuffalo/packr"
 )
 
+var (
+	dir  = flag.String("dir", "./$outFileDir", "static files directory")
+	help = flag.Bool("help", false, "show help info")
+	port = flag.Int("port", 3000, "serve port")
+)
+
+func init() {
+	flag.Parse()
+	if *help {
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+}
+
 func main() {
-	box := packr.NewBox("./$outFileDir")
+	box := packr.NewBox(*dir)
 
 	http.Handle("/", http.FileServer(box))
-	host := ":3000"
-	log.Printf("listen on %s\n", host)
+	host := fmt.Sprintf(":%d", *port)
+	fmt.Printf("listen on %s\n", host)
 	http.ListenAndServe(host, nil)
 }
 EOF
@@ -189,3 +205,12 @@ ${servFileName%.go}: ${servFileName%go}c
 clean:
 	@rm -rf ${servFileName%.go}
 EOF
+
+cat >loader.sh<<EOF
+#!/bin/bash
+
+cd ${acrPath%/*}
+./${servFileName%.go} \$@
+EOF
+chmod +x loader.sh
+echo "loader generated: ${acrPath%/*}/loader.sh"

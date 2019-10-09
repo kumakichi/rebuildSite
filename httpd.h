@@ -77,6 +77,7 @@ static struct {
 	{"js",   "application/javascript"},
 	{"css",  "text/css; charset=utf-8"},
 	{"woff", "font/woff"},
+	{"woff2", "font/woff2"},
 	{"ttf",  "application/x-font-ttf"},
 	{"rar",  "application/x-rar-compressed"},
 	{"mp4",  "video/mp4"},
