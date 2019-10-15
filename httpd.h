@@ -83,6 +83,7 @@ static struct {
 	{"mp4",  "video/mp4"},
 	{"mp3",  "audio/mpeg"},
 	{"flv",  "video/x-flv"},
+	{"json", "application/json"},
 	{0, 0}
 };
 
