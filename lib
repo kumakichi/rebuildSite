@@ -42,17 +42,16 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 			fi
 		fi
 
-        if [ "$index" = "$link" ]
-        then
-            eval "$cmdLine index.html"
-        fi
+		if [ "$index" = "$link" ]; then
+			echo "retrive index.html ... $cmdLine index.html"
+			eval "$cmdLine index.html"
+		fi
 
 		truncLine=$(echo "$link" | sed "s@$prefix@@g")
 		if [ ${#truncLine} -eq 0 ]; then
-            if [ "$index" = "" ]
-            then
-                eval "$cmdLine index.html"
-            fi
+			if [ "$index" = "" ]; then
+				eval "$cmdLine index.html"
+			fi
 			continue
 		fi
 
@@ -82,10 +81,28 @@ cat "$acrPath" | grep -v "curl 'data:image/" | grep -v "curl '[^ ]\+google-analy
 	done
 
 if [ "$junk" != "" ]; then
-    sed -E -i "s@$junk@@g" index.html
+	sed -E -i "s@$junk@@g" index.html
 fi
 sed -E -i 's@$prefix@@g;s@(.+)(apis.google.com)(.*)@@g' index.html
-sed -E -i "s@(.*)(\"|')(https\:\/\/)(.*)@\1\2\4@g;s@(.*)(\"|')(//)(.*)@\1\2\4@g" index.html
+
+while true; do
+	grep -E ".*[\"']http[s]?:\/\/.*" index.html >/dev/null 2>&1
+	if [ $? -ne 1 ]; then
+		sed -E -i "s@(.*)(\"|')(http[s]?\:\/\/)(.*)@\1\2./\4@g" index.html
+	else
+		break
+	fi
+done
+
+while true; do
+	grep -E ".*[\"'][/]+.*" index.html >/dev/null 2>&1
+	if [ $? -ne 1 ]; then
+		echo "1112"
+		sed -E -i "s@(.*)(\"|')([/]+)(.*)@\1\2./\4@g" index.html
+	else
+		break
+	fi
+done
 
 cd ..
 cat >"$servFileName" <<EOF
@@ -194,7 +211,7 @@ void route(int sock_fd)
 }
 EOF
 
-cat >Makefile<<EOF
+cat >Makefile <<EOF
 .PHONY:all
 
 all: ${servFileName%.go}
@@ -206,7 +223,7 @@ clean:
 	@rm -rf ${servFileName%.go}
 EOF
 
-cat >loader.sh<<EOF
+cat >loader.sh <<EOF
 #!/bin/bash
 
 cd ${acrPath%/*}
