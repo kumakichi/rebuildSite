@@ -79,6 +79,7 @@ static struct {
 	{"woff", "font/woff"},
 	{"woff2", "font/woff2"},
 	{"ttf",  "application/x-font-ttf"},
+	{"otf",  "application/x-font-otf"},
 	{"rar",  "application/x-rar-compressed"},
 	{"mp4",  "video/mp4"},
 	{"mp3",  "audio/mpeg"},
