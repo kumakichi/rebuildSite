@@ -240,9 +240,9 @@ void serve_file(int sock_fd, char *filePath)
 			break;
 		}
 	}
-	if (fstr == 0)
-		logger(FORBIDDEN, "file extension type not supported", uri,
-		       sock_fd);
+	//if (fstr == 0)
+	//	logger(FORBIDDEN, "file extension type not supported", uri,
+	//	       sock_fd);
 
 	if ((file_fd = open(filePath, O_RDONLY)) == -1) {	/* open the file for reading */
 		logger(NOTFOUND, "failed to open file", filePath, sock_fd);
