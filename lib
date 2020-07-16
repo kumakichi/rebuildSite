@@ -228,6 +228,23 @@ cat >loader.sh <<EOF
 
 cd ${acrPath%/*}
 ./${servFileName%.go} \$@
+if [ \$? -eq 0 ]; then
+	exit
+fi
+
+count=0
+while true; do
+	let count+=1
+	if [ \$count -gt 3 ]; then
+		echo "already tried 3 times, exit"
+		break
+	fi
+
+    ./${servFileName%.go} \$@ -p ${RANDOM}
+	if [ \$? -eq 0 ]; then
+		exit
+	fi
+done
 EOF
 chmod +x loader.sh
 echo "loader generated: ${acrPath%/*}/loader.sh"
